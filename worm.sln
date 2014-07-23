@@ -5,6 +5,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "worm", "worm\worm.csproj", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChatSharp", "externals\ChatSharp\ChatSharp\ChatSharp.csproj", "{4033AFFA-BEA3-4BDF-84EA-59A23360FD36}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RedditSharp", "externals\RedditSharp\RedditSharp\RedditSharp.csproj", "{A368CB75-75F0-4489-904D-B5CEBB0FE624}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x86 = Debug|x86
@@ -19,6 +21,10 @@ Global
 		{4033AFFA-BEA3-4BDF-84EA-59A23360FD36}.Debug|x86.Build.0 = Debug|Any CPU
 		{4033AFFA-BEA3-4BDF-84EA-59A23360FD36}.Release|x86.ActiveCfg = Release|Any CPU
 		{4033AFFA-BEA3-4BDF-84EA-59A23360FD36}.Release|x86.Build.0 = Release|Any CPU
+		{A368CB75-75F0-4489-904D-B5CEBB0FE624}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{A368CB75-75F0-4489-904D-B5CEBB0FE624}.Debug|x86.Build.0 = Debug|Any CPU
+		{A368CB75-75F0-4489-904D-B5CEBB0FE624}.Release|x86.ActiveCfg = Release|Any CPU
+		{A368CB75-75F0-4489-904D-B5CEBB0FE624}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(MonoDevelopProperties) = preSolution
 		StartupItem = worm\worm.csproj

@@ -11,5 +11,7 @@ namespace worm
         public string RealName { get; set; }
         public string[] Channels { get; set; }
         public string[] Admins { get; set; }
+        public string RedditUser { get; set; }
+        public string RedditPassword { get; set; }
     }
 }

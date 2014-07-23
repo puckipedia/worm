@@ -6,6 +6,8 @@ using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading;
 using ChatSharp;
+using RedditSharp;
+using RedditSharp.Things;
 using System.IO;
 using ChatSharp.Events;
 using Newtonsoft.Json;
@@ -19,18 +21,33 @@ namespace worm
         static IrcClient client;
         static Config config;
         static Regex urlRegex = new Regex("((([A-Za-z]{3,9}:(?:\\/\\/)?)(?:[-;:&=\\+\\$,\\w]+@)?[A-Za-z0-9.-]+|(?:www.|[-;:&=\\+\\$,\\w]+@)[A-Za-z0-9.-]+)((?:\\/[\\+~%\\/.\\w-_]*)?\\??(?:[-\\+=&;%@.\\w_]*)#?(?:[\\w]*))?)");
+        static Regex sourceRegex = new Regex("\\[(?<source>.*)\\]");
+        static Reddit reddit;
+        static Subreddit awwnime;
+        static List<string> moeList;
 
         public static void Main(string[] args)
         {
+            var configFile = "config.json";
+            if (args.Length == 1)
+                configFile = args[0];
             config = new Config();
-            if (File.Exists("config.json"))
-                JsonConvert.PopulateObject(File.ReadAllText("config.json"), config);
+            if (File.Exists(configFile))
+                JsonConvert.PopulateObject(File.ReadAllText(configFile), config);
             else
             {
-                File.WriteAllText("config.json", JsonConvert.SerializeObject(config, Formatting.Indented));
+                File.WriteAllText(configFile, JsonConvert.SerializeObject(config, Formatting.Indented));
                 return;
             }
-            File.WriteAllText("config.json", JsonConvert.SerializeObject(config, Formatting.Indented));
+            File.WriteAllText(configFile, JsonConvert.SerializeObject(config, Formatting.Indented));
+
+            Console.WriteLine("Logging into Reddit...");
+            reddit = new Reddit(config.RedditUser, config.RedditPassword);
+            awwnime = reddit.GetSubreddit("/r/awwnime");
+            moeList = new List<string>();
+            LoadMoe();
+            Console.WriteLine("Done.");
+
             client = new IrcClient(config.Network, new IrcUser(config.Nick, config.User, config.Password, config.RealName));
             client.RawMessageSent += (s, e) => Console.WriteLine(">> {0}", e.Message);
             client.RawMessageRecieved += (s, e) => Console.WriteLine("<< {0}", e.Message);
@@ -72,6 +89,31 @@ namespace worm
                     case "hug":
                         client.SendAction("hugs " + e.PrivateMessage.User.Nick, e.PrivateMessage.Source);
                         break;
+                    case "moe":
+                        Post moe;
+                        if (parameters.Length == 0)
+                            moe = awwnime.Hot.FirstOrDefault(p => !p.IsSelfPost && !moeList.Contains(p.FullName));
+                        else
+                            moe = awwnime.Search(string.Join(",", parameters)).FirstOrDefault(p => !p.IsSelfPost && !moeList.Contains(p.FullName));
+                        if (moe == null)
+                        {
+                            Reply(e, "I'm all out of moe! Sorry :(");
+                            break;
+                        }
+                        var source = sourceRegex.Match(moe.Title);
+                        if (!source.Success)
+                            Reply(e, "Here's a cute picture: {0}", moe.Url.ToString());
+                        else
+                        {
+                            var s = source.Groups["source"].Value;
+                            if (s.ToUpper() == "ORIGINAL")
+                                Reply(e, "Here's a cute original picture: {0}", moe.Url.ToString());
+                            else
+                                Reply(e, "Here's a cute picture from {0}: {1}", source.Groups["source"].Value, moe.Url.ToString());
+                        }
+                        moeList.Add(moe.FullName);
+                        SaveMoe();
+                        break;
                     case "kos":
                     case "api":
                     case "kernel":
@@ -94,6 +136,7 @@ namespace worm
                     case "xkcd":
                         HandleSearch(e, "site:xkcd.com " + string.Join(" ", parameters));
                         break;
+                    case "bbt":
                     case "baka":
                     case "bakabt":
                         HandleSearch(e, "site:bakabt.me " + string.Join(" ", parameters));
@@ -140,6 +183,24 @@ namespace worm
 
         public static void HandleAdminMessage(PrivateMessageEventArgs e, string command, string[] parameters)
         {
+        }
+
+        static void LoadMoe()
+        {
+            if (File.Exists("moe.json"))
+            {
+                var json = JArray.Parse(File.ReadAllText("moe.json"));
+                foreach (var item in json)
+                {
+                    moeList.Add(item.Value<string>());
+                }
+            }
+        }
+
+        static void SaveMoe()
+        {
+            var moe = "[" + string.Join(",", moeList.Select(m => "\"" + m + "\"")) + "]";
+            File.WriteAllText("moe.json", moe);
         }
 
         static void SearchKOS(PrivateMessageEventArgs e, string[] parameters)
